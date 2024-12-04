@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Management Expert System Chat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+
+        .chat-container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .chat-box {
+            display: flex;
+            flex-direction: column;
+            height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .chat-box .user, .chat-box .bot {
+            margin: 5px;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .user {
+            background-color: #e1f5fe;
+            align-self: flex-end;
+            max-width: 80%;
+        }
+
+        .bot {
+            background-color: #ace8f4;
+            align-self: flex-start;
+            max-width: 80%;
+        }
+
+        .input-container {
+            display: flex;
+            align-items: center;
+            height: 100%;
+            width: 100%;
+        }
+
+        input[type="text"] {
+            width: 80%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 10px;
+            margin-left: 10px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .title{
+            margin-left: auto;
+            margin-right: auto;
+            color: #007BFF;
+        }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="chat-box" id="chatBox">
+        <div class="title"><h1>Project Management Approach ES</h1></div>
+        <div class="bot">Hello! I'm here to help you choose the best project management approach. Let's start with the basics.</div>
+        <div class="bot">What is the size of your project? (small, medium, large)</div>
+    </div>
+    <div class="input-container">
+        <input type="text" id="userInput" placeholder="Enter your answer...">
+        <button id="sendButton">Send</button>
+    </div>
+</div>
+
+<script>
+    const sendButton = document.getElementById('sendButton');
+    const userInput = document.getElementById('userInput');
+    const chatBox = document.getElementById('chatBox');
+
+    let userResponses = {};
+    let currentQuestion = 'size';  // Track which question is being asked
+
+    // Function to send user input and trigger the next question
+    sendButton.addEventListener('click', () => {
+        const input = userInput.value.trim();
+
+        if (input) {
+            // Display user response
+            chatBox.innerHTML += `<div class="user">${input}</div>`;
+            userResponses[currentQuestion] = input;
+
+            // Reset the input field
+            userInput.value = '';
+            userInput.focus();
+
+            // Check which question to ask next
+            if (currentQuestion === 'size') {
+                currentQuestion = 'complexity';
+                chatBox.innerHTML += `<div class="bot">What is the complexity of your project? (low, medium, high)</div>`;
+            } else if (currentQuestion === 'complexity') {
+                currentQuestion = 'deadline';
+                chatBox.innerHTML += `<div class="bot">What is the deadline for your project? (flexible, strict, no deadline)</div>`;
+            } else if (currentQuestion === 'deadline') {
+                currentQuestion = 'team_experience';
+                chatBox.innerHTML += `<div class="bot">What is the experience level of your team? (low, medium, high)</div>`;
+            } else if (currentQuestion === 'team_experience') {
+                currentQuestion = 'risk';
+                chatBox.innerHTML += `<div class="bot">What is the risk level of your project? (low, medium, high)</div>`;
+            } else if (currentQuestion === 'risk') {
+                // Once all inputs are gathered, send the data to the backend
+                sendRecommendationRequest(userResponses);
+            }
+        }
+    });
+
+    // Function to send the collected responses to the backend
+    function sendRecommendationRequest(userResponses) {
+        fetch("/get_recommendation", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(userResponses),
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Show the recommendation to the user
+            chatBox.innerHTML += `<div class="bot">Here are the recommendations:</div>`;
+            data.forEach(rec => {
+                chatBox.innerHTML += `<div class="bot">Approach: ${rec.approach}</div>`;
+                chatBox.innerHTML += `<div class="bot">Confidence: ${rec.confidence}</div>`;
+                chatBox.innerHTML += `<div class="bot">Explanation: ${rec.explanation}</div>`;
+                if (rec.alternatives.length > 0) {
+                    chatBox.innerHTML += `<div class="bot">Alternatives: ${rec.alternatives.join(', ')}</div>`;
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            chatBox.innerHTML += `<div class="bot">Sorry, something went wrong. Please try again later.</div>`;
+        });
+    }
+</script>
+
+</body>
+</html>
